@@ -179,4 +179,22 @@ If you find nanochat helpful in your research cite simply as:
 
 ## License
 
-MIT
+nanochat 的数据分三个训练阶段，每个阶段用不同的数据：
+
+预训练（Pretraining）
+使用 FineWeb-EDU 数据集，这是大量网页文本组成的高质量教育类语料。Karpathy 把整个数据集重新打包成简单的、完全打乱顺序的 shards，重新上传到 HuggingFace 上作为 karpathy/fineweb-edu-100b-shuffle。每个 shard 是约 0.25M 字符的 parquet 文件，gzip 压缩后约 100MB。总共 1822 个 shard，训练 depth=20 的模型只需下载其中 240 个，约 24GB。 GitHub
+
+中训练（Midtraining）
+这个阶段的目标是把 base model 变成能对话的 chat model，默认数据混合比例是：SmolTalk（460K 条）+ MMLU aux-train（100K 条）+ GSM8K（8K 条），共约 568K 条。SmolTalk 提供通用对话能力，MMLU 训练多选题行为，GSM8K 引入 Python tool use（通过 <|python_start|>…<|python_end|> 特殊 token）。 MarkTechPost
+
+SFT（监督微调）
+SFT 阶段在更高质量、精心筛选的数据上继续微调，聚焦的任务包括：MMLU（知识）、ARC（推理）、GSM8K（数学）、HumanEval（代码）。 Aiengineering
+
+RL（强化学习，可选）
+使用 GRPO/REINFORCE 方法，数据来源是 GSM8K 的数学题，通过自我对弈提升推理能力。 Aiengineering
+
+评测数据
+评测集是 CORE eval bundle（包含 HellaSwag、ARC、BoolQ 等 22 个自动补全数据集），存放在 ~/.cache/nanochat/eval_bundle。 MarkTechPost
+
+整体数据策略非常清晰：海量网页文本打底 → 对话数据激活对话能力 → 任务数据精调能力 → 数学 RL 提升推理，每一步的数据量和质量都在递减但精度在递增。
+
